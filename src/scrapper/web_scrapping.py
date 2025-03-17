@@ -6,31 +6,33 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 import pandas as pd
 
-URL = "https://abe.web.geniussports.com/competitions/?WHurl=%2Fperson%2F2151822%2Fgamelog%3F"
-
-options = Options()
-options.add_argument("--headless")
-driver = Chrome(options=options)
-driver.get(URL)
-
-stat_names = driver.find_elements(By.TAG_NAME, "tr")
-headers = [stat for stat in stat_names[0].text.split()]
-
-def splitting_data(text):
-    pattern = r"(\d{1,2} [A-Za-z]+\.? \d{4} \d{2}:\d{2})"
-    match = re.search(pattern, text)
+class Scrapper():
     
-    if match:
-        date = match.group(1)
-        university_name = text[:match.start()].strip()
-        numeric_values = text[match.end():].strip().split()
+    def __init__(self, url:str):
+        self.url = url
+        options = Options()
+        options.add_argument("--headless")
+        self.driver = Chrome(options=options)
+        self.driver.get(self.url)
+
+    def __splitting_data(self, text) -> list:
+        pattern = r"(\d{1,2} [A-Za-z]+\.? \d{4} \d{2}:\d{2})"
+        match = re.search(pattern, text)
         
-        return [university_name, date] + numeric_values
-    
-    else:
-        return None
+        if match:
+            date = match.group(1)
+            university_name = text[:match.start()].strip()
+            numeric_values = text[match.end():].strip().split()
+            
+            return [university_name, date] + numeric_values
+        
+        else:
+            return None
 
-data = [splitting_data(stat_names[stat].text) for stat in range(1, len(stat_names))]    
-
-roi_stats = pd.DataFrame(data=data, columns=headers)
-roi_stats.to_csv("../../data/raw/stats.csv", index=None)
+    def scrap_and_load(self):
+        stat_names = self.driver.find_elements(By.TAG_NAME, "tr")
+        headers = [stat for stat in stat_names[0].text.split()]
+        data = [self.__splitting_data(stat_names[stat].text) for stat in range(1, len(stat_names))]   
+        roi_stats = pd.DataFrame(data=data, columns=headers)
+        roi_stats.to_csv("data/raw/stats.csv", index=None)
+        print("Scrapping and loading done successfully!!")
