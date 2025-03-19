@@ -33,7 +33,9 @@ class Scrapper():
         stat_names = self.driver.find_elements(By.TAG_NAME, "tr")
         headers = [stat for stat in stat_names[0].text.split()]
         data = [self.__splitting_data(stat_names[stat].text) for stat in range(1, len(stat_names))]   
+        
         roi_stats = pd.DataFrame(data=data, columns=headers)
         roi_stats.to_csv("data/raw/stats.csv", index=None)
         print("Scrapping and loading done successfully!!")
+        
         return "data/raw/stats.csv"
